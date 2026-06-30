@@ -1,0 +1,6 @@
+{"sessionId": "ac330f", "runId": "post-fix", "hypothesisId": "H1", "location": "verify:versions", "message": "chromadb version", "data": {"package": "chromadb", "version": "0.6.3"}, "timestamp": 1782787607028}
+{"sessionId": "ac330f", "runId": "post-fix", "hypothesisId": "H1", "location": "verify:versions", "message": "transformers version", "data": {"package": "transformers", "version": "5.12.1"}, "timestamp": 1782787607029}
+{"sessionId": "ac330f", "runId": "post-fix", "hypothesisId": "H1", "location": "verify:versions", "message": "tokenizers version", "data": {"package": "tokenizers", "version": "0.22.2"}, "timestamp": 1782787607029}
+{"sessionId": "ac330f", "runId": "post-fix", "hypothesisId": "H2", "location": "verify:imports", "message": "both imports ok", "data": {"chromadb": "0.6.3", "transformers": "5.12.1"}, "timestamp": 1782787608692}
+{"sessionId": "ac330f", "runId": "post-fix", "hypothesisId": "H4", "location": "verify:chromadb_client", "message": "Client() ok", "data": {}, "timestamp": 1782787608862}
+{"sessionId": "ac330f", "runId": "post-fix", "hypothesisId": "H5", "location": "verify:pip_check", "message": "pip check", "data": {"returncode": 0, "stdout": "No broken requirements found."}, "timestamp": 1782787609215}

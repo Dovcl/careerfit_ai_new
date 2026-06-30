@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오목 게임</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 16px 0 8px;
+      font-size: 24px;
+    }
+
+    #gameInfo {
+      margin-bottom: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    canvas {
+      background: #d8a85f;
+      border: 2px solid #333;
+      touch-action: none;
+    }
+
+    .button-area {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      gap: 10px;
+      padding: 16px;
+      box-sizing: border-box;
+      position: fixed;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid #ddd;
+    }
+
+    button {
+      flex: 1;
+      padding: 14px 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #333;
+      color: white;
+    }
+
+    button:active {
+      background: #555;
+    }
+
+    .spacer {
+      height: 80px;
+    }
+  </style>
+</head>
+<body>
+  <h1>오목 게임</h1>
+  <div id="gameInfo">사용자 차례입니다.</div>
+
+  <canvas id="boardCanvas"></canvas>
+
+  <div class="spacer"></div>
+
+  <div class="button-area">
+    <button onclick="resetGame()">다시 시작</button>
+    <button onclick="changeBoardSize()">판 크기 변경</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("boardCanvas");
+    const ctx = canvas.getContext("2d");
+    const gameInfo = document.getElementById("gameInfo");
+
+    let boardSize = 15;
+    let cellSize;
+    let margin;
+
+    let board = [];
+    let isPlayerTurn = true;
+    let isGameOver = false;
+
+    const PLAYER = 1;
+    const AI = 2;
+
+    function initBoard() {
+      board = Array.from({ length: boardSize }, () =>
+        Array(boardSize).fill(0)
+      );
+    }
+
+    function setupCanvas() {
+      const screenWidth = window.innerWidth;
+      const canvasSize = Math.min(screenWidth - 24, 420);
+
+      canvas.width = canvasSize;
+      canvas.height = canvasSize;
+
+      margin = canvasSize * 0.08;
+      cellSize = (canvasSize - margin * 2) / (boardSize - 1);
+
+      drawGame();
+    }
+
+    function drawGame() {
+      drawBoard();
+      drawStones();
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#d8a85f";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i < boardSize; i++) {
+        const pos = margin + i * cellSize;
+
+        ctx.beginPath();
+        ctx.moveTo(pos, margin);
+        ctx.lineTo(pos, canvas.height - margin);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(margin, pos);
+        ctx.lineTo(canvas.width - margin, pos);
+        ctx.stroke();
+      }
+
+      drawStarPoints();
+    }
+
+    function drawStarPoints() {
+      const points =
+        boardSize === 15
+          ? [
+              [3, 3], [7, 7], [11, 11],
+              [3, 11], [11, 3]
+            ]
+          : [
+              [3, 3], [9, 9], [15, 15],
+              [3, 15], [15, 3],
+              [3, 9], [9, 3], [15, 9], [9, 15]
+            ];
+
+      ctx.fillStyle = "#222";
+
+      points.forEach(([x, y]) => {
+        ctx.beginPath();
+        ctx.arc(
+          margin + x * cellSize,
+          margin + y * cellSize,
+          4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      });
+    }
+
+    function drawStones() {
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (board[y][x] !== 0) {
+            drawStone(x, y, board[y][x]);
+          }
+        }
+      }
+    }
+
+    function drawStone(x, y, player) {
+      const centerX = margin + x * cellSize;
+      const centerY = margin + y * cellSize;
+      const radius = cellSize * 0.42;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+
+      ctx.fillStyle = player === PLAYER ? "black" : "white";
+      ctx.fill();
+
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    function getBoardPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+
+      const x = Math.round((event.clientX - rect.left - margin) / cellSize);
+      const y = Math.round((event.clientY - rect.top - margin) / cellSize);
+
+      if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) {
+        return null;
+      }
+
+      return { x, y };
+    }
+
+    function handleCanvasClick(event) {
+      if (isGameOver) return;
+
+      if (!isPlayerTurn) {
+        gameInfo.textContent = "AI가 두는 중입니다.";
+        return;
+      }
+
+      const pos = getBoardPosition(event);
+      if (!pos) return;
+
+      const { x, y } = pos;
+
+      if (board[y][x] !== 0) {
+        gameInfo.textContent = "이미 돌이 있는 자리입니다.";
+        return;
+      }
+
+      placeStone(x, y, PLAYER);
+
+      if (checkWin(x, y, PLAYER)) {
+        gameInfo.textContent = "사용자 승리!";
+        isGameOver = true;
+        return;
+      }
+
+      if (isBoardFull()) {
+        gameInfo.textContent = "무승부입니다.";
+        isGameOver = true;
+        return;
+      }
+
+      isPlayerTurn = false;
+      gameInfo.textContent = "AI가 생각 중입니다...";
+
+      setTimeout(aiMove, 500);
+    }
+
+    function placeStone(x, y, player) {
+      board[y][x] = player;
+      drawGame();
+    }
+
+    function aiMove() {
+        if (isGameOver) return;
+
+        const move =
+            findWinningMove(AI) ||
+            findWinningMove(PLAYER) ||
+            getBestMove();
+
+        if (!move) {
+            gameInfo.textContent = "무승부입니다.";
+            isGameOver = true;
+            return;
+        }
+
+        placeStone(move.x, move.y, AI);
+
+        if (checkWin(move.x, move.y, AI)) {
+            gameInfo.textContent = "AI 승리!";
+            isGameOver = true;
+            return;
+        }
+
+        if (isBoardFull()) {
+            gameInfo.textContent = "무승부입니다.";
+            isGameOver = true;
+            return;
+        }
+
+        isPlayerTurn = true;
+        gameInfo.textContent = "사용자 차례입니다.";
+        }
+
+        function findWinningMove(player) {
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                if (board[y][x] === 0) {
+                    board[y][x] = player;
+
+                    const isWinningMove = checkWin(x, y, player);
+
+                    board[y][x] = 0;
+
+                    if (isWinningMove) {
+                    return { x, y };
+                    }
+                }
+                }
+            }
+
+            return null;
+            }
+
+            function getRandomMove() {
+            const emptyCells = [];
+
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                if (board[y][x] === 0) {
+                    emptyCells.push({ x, y });
+                }
+                }
+            }
+
+            if (emptyCells.length === 0) {
+                return null;
+            }
+
+            const randomIndex = Math.floor(Math.random() * emptyCells.length);
+            return emptyCells[randomIndex];
+            }
+
+            function getBestMove() {
+                let bestScore = -1;
+                let bestMoves = [];
+
+                for (let y = 0; y < boardSize; y++) {
+                    for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] === 0) {
+                        const attackScore = evaluatePosition(x, y, AI);
+                        const defenseScore = evaluatePosition(x, y, PLAYER) * 0.9;
+                        const centerScore = getCenterScore(x, y);
+
+                        const totalScore = attackScore + defenseScore + centerScore;
+
+                        if (totalScore > bestScore) {
+                        bestScore = totalScore;
+                        bestMoves = [{ x, y }];
+                        } else if (totalScore === bestScore) {
+                        bestMoves.push({ x, y });
+                        }
+                    }
+                    }
+                }
+
+                if (bestMoves.length === 0) return null;
+
+                const randomIndex = Math.floor(Math.random() * bestMoves.length);
+                return bestMoves[randomIndex];
+                }
+
+                function evaluatePosition(x, y, player) {
+                const directions = [
+                    [1, 0],
+                    [0, 1],
+                    [1, 1],
+                    [1, -1]
+                ];
+
+                let score = 0;
+
+                for (const [dx, dy] of directions) {
+                    const lineInfo = getLineInfo(x, y, dx, dy, player);
+                    score += getPatternScore(lineInfo.count, lineInfo.openEnds);
+                }
+
+                return score;
+                }
+
+                function getLineInfo(x, y, dx, dy, player) {
+                let count = 1;
+                let openEnds = 0;
+
+                let nx = x + dx;
+                let ny = y + dy;
+
+                while (
+                    nx >= 0 &&
+                    nx < boardSize &&
+                    ny >= 0 &&
+                    ny < boardSize &&
+                    board[ny][nx] === player
+                ) {
+                    count++;
+                    nx += dx;
+                    ny += dy;
+                }
+
+                if (
+                    nx >= 0 &&
+                    nx < boardSize &&
+                    ny >= 0 &&
+                    ny < boardSize &&
+                    board[ny][nx] === 0
+                ) {
+                    openEnds++;
+                }
+
+                nx = x - dx;
+                ny = y - dy;
+
+                while (
+                    nx >= 0 &&
+                    nx < boardSize &&
+                    ny >= 0 &&
+                    ny < boardSize &&
+                    board[ny][nx] === player
+                ) {
+                    count++;
+                    nx -= dx;
+                    ny -= dy;
+                }
+
+                if (
+                    nx >= 0 &&
+                    nx < boardSize &&
+                    ny >= 0 &&
+                    ny < boardSize &&
+                    board[ny][nx] === 0
+                ) {
+                    openEnds++;
+                }
+
+                return { count, openEnds };
+                }
+
+                function getPatternScore(count, openEnds) {
+                if (count >= 5) return 100000;
+
+                if (count === 4 && openEnds === 2) return 30000;
+                if (count === 4 && openEnds === 1) return 10000;
+
+                if (count === 3 && openEnds === 2) return 5000;
+                if (count === 3 && openEnds === 1) return 1000;
+
+                if (count === 2 && openEnds === 2) return 500;
+                if (count === 2 && openEnds === 1) return 100;
+
+                if (count === 1 && openEnds === 2) return 30;
+
+                return 1;
+                }
+
+                function getCenterScore(x, y) {
+                const center = (boardSize - 1) / 2;
+                const distance = Math.abs(x - center) + Math.abs(y - center);
+
+                return Math.max(0, 100 - distance * 10);
+                }
+
+    
+
+    function checkWin(x, y, player) {
+      const directions = [
+        [1, 0],
+        [0, 1],
+        [1, 1],
+        [1, -1]
+      ];
+
+      for (const [dx, dy] of directions) {
+        let count = 1;
+
+        count += countStones(x, y, dx, dy, player);
+        count += countStones(x, y, -dx, -dy, player);
+
+        if (count >= 5) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function countStones(x, y, dx, dy, player) {
+      let count = 0;
+      let nx = x + dx;
+      let ny = y + dy;
+
+      while (
+        nx >= 0 &&
+        nx < boardSize &&
+        ny >= 0 &&
+        ny < boardSize &&
+        board[ny][nx] === player
+      ) {
+        count++;
+        nx += dx;
+        ny += dy;
+      }
+
+      return count;
+    }
+
+    function isBoardFull() {
+      for (let y = 0; y < boardSize; y++) {
+        for (let x = 0; x < boardSize; x++) {
+          if (board[y][x] === 0) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    function resetGame() {
+      initBoard();
+      isPlayerTurn = true;
+      isGameOver = false;
+      gameInfo.textContent = "사용자 차례입니다.";
+      drawGame();
+    }
+
+    function changeBoardSize() {
+      boardSize = boardSize === 15 ? 19 : 15;
+      resetGame();
+      setupCanvas();
+      gameInfo.textContent = `${boardSize}×${boardSize} 오목판 - 사용자 차례입니다.`;
+    }
+
+    canvas.addEventListener("click", handleCanvasClick);
+    window.addEventListener("resize", setupCanvas);
+
+    initBoard();
+    setupCanvas();
+  </script>
+</body>
+</html>
