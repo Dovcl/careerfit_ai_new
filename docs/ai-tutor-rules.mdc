@@ -1,7 +1,7 @@
 ---
 description: 대학생용 AI 개발 조교 응답 규칙
 globs:
-alwaysApply: true
+alwaysApply: false
 ---
 
 
