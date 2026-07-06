@@ -2,6 +2,8 @@
 # RAG 연결 + LLM_MODEL 기반 provider 분기 + Ollama 통합 버전
 
 import os
+import time
+import json
 import requests
 from dotenv import load_dotenv
 
@@ -194,6 +196,78 @@ def call_gemini(prompt: str) -> str:
     response = model.generate_content(prompt)
 
     return response.text
+
+
+def stream_gemini(prompt: str):
+    """Gemini API 스트리밍 — chunk 단위로 텍스트를 yield합니다."""
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY가 .env에 없습니다.")
+
+    import google.generativeai as genai
+
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel(PROVIDER_MODEL)
+    response = model.generate_content(prompt, stream=True)
+
+    for chunk in response:
+        if chunk.text:
+            yield chunk.text
+
+
+def stream_ollama(prompt: str):
+    """Ollama /api/generate stream=True"""
+    url = f"{OLLAMA_BASE_URL}/api/generate"
+    payload = {
+        "model": PROVIDER_MODEL,
+        "prompt": prompt,
+        "stream": True,
+    }
+
+    response = requests.post(url, json=payload, stream=True, timeout=120)
+    response.raise_for_status()
+
+    for line in response.iter_lines():
+        if not line:
+            continue
+        data = line.decode("utf-8")
+        parsed = json.loads(data)
+        token = parsed.get("response", "")
+        if token:
+            yield token
+
+
+def stream_llm(prompt: str):
+    """
+    provider에 맞게 LLM 응답을 스트리밍합니다.
+    스트리밍 미지원 provider는 전체 응답 후 글자 단위로 yield합니다.
+    """
+    if MOCK_MODE:
+        mock_text = (
+            "[MOCK 스트리밍] RAG 기반 맞춤 분석 결과입니다.\n\n"
+            "1. 현재 역량 평가\n"
+            "입력하신 전공과 스킬을 바탕으로 데이터 분석 직무에 적합한 기본 역량을 갖추고 있습니다.\n\n"
+            "2. 추천 공고\n"
+            "검색된 공고 중 유사도가 높은 포지션을 우선 검토해 보세요.\n\n"
+            "3. 부족한 역량 및 준비 방향\n"
+            "실무 프로젝트 경험과 포트폴리오 정리를 권장합니다."
+        )
+        for char in mock_text:
+            yield char
+            time.sleep(0.008)
+        return
+
+    if PROVIDER == "gemini":
+        yield from stream_gemini(prompt)
+        return
+
+    if PROVIDER == "ollama":
+        yield from stream_ollama(prompt)
+        return
+
+    # Mistral / HuggingFace 등: 일반 호출 후 타이핑 효과용 chunk
+    answer = call_llm(prompt)
+    for char in answer:
+        yield char
 
 
 # =========================

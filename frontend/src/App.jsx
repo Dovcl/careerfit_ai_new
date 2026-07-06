@@ -4,23 +4,55 @@ import InputForm from "./components/InputForm";
 import ResultCard from "./components/ResultCard";
 import SourceCard from "./components/SourceCard";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 // ⚠️ API Key는 절대 여기에 넣지 않습니다
+
+async function parseSseStream(response, onEvent) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() || "";
+
+    for (const part of parts) {
+      if (!part.trim()) continue;
+
+      let event = "message";
+      let data = "";
+
+      for (const line of part.split("\n")) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        if (line.startsWith("data:")) data += line.slice(5).trim();
+      }
+
+      if (!data) continue;
+      onEvent(event, JSON.parse(data));
+    }
+  }
+}
 
 function App() {
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
 
   async function handleAnalyze(formData) {
     if (isLoading) return;
 
     setIsLoading(true);
+    setIsStreaming(true);
     setError(null);
-    setResult(null);
+    setResult({ answer: "", sources: [] });
 
     try {
-      const response = await fetch(`${API_BASE}/analyze`, {
+      const response = await fetch(`${API_BASE}/analyze/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -32,21 +64,40 @@ function App() {
 
       if (!response.ok) throw new Error(`서버 오류: ${response.status}`);
 
-      const data = await response.json();
-      setResult({
-        answer: data.answer ?? "",
-        sources: Array.isArray(data.sources) ? data.sources : [],
+      await parseSseStream(response, (event, data) => {
+        if (event === "sources") {
+          setResult((prev) => ({
+            ...prev,
+            sources: Array.isArray(data.sources) ? data.sources : [],
+          }));
+        }
+
+        if (event === "token" && data.text) {
+          setResult((prev) => ({
+            ...prev,
+            answer: (prev?.answer || "") + data.text,
+          }));
+        }
+
+        if (event === "error") {
+          throw new Error(data.message || "스트리밍 중 오류가 발생했습니다.");
+        }
       });
     } catch (err) {
       if (err.message.includes("Failed to fetch")) {
         setError("FastAPI 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.");
       } else {
-        setError("분석 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        setError(err.message || "분석 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
+      setResult(null);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
     }
   }
+
+  const showResults = result && (result.answer || result.sources?.length > 0);
+  const showLoadingBanner = isLoading && !result?.answer;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80">
@@ -76,7 +127,7 @@ function App() {
           </div>
         )}
 
-        {isLoading && (
+        {showLoadingBanner && (
           <div
             aria-live="polite"
             aria-busy="true"
@@ -87,12 +138,12 @@ function App() {
           </div>
         )}
 
-        {result && !isLoading && (
+        {showResults && (
           <div className="mt-8 space-y-4" aria-live="polite">
-            <ResultCard
-              answer={result.answer}
-              sources={result.sources}
-            />
+            {isStreaming && result.answer && (
+              <p className="text-xs font-medium text-blue-600">AI가 답변을 작성 중입니다...</p>
+            )}
+            <ResultCard answer={result.answer} sources={result.sources} />
             <SourceCard sources={result.sources} />
           </div>
         )}
