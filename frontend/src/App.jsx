@@ -4,7 +4,7 @@ import InputForm from "./components/InputForm";
 import ResultCard from "./components/ResultCard";
 import SourceCard from "./components/SourceCard";
 
-const API_BASE = "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 // ⚠️ API Key는 절대 여기에 넣지 않습니다
 
 function App() {
@@ -13,6 +13,8 @@ function App() {
   const [error, setError] = useState(null);
 
   async function handleAnalyze(formData) {
+    if (isLoading) return;
+
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -29,14 +31,17 @@ function App() {
       });
 
       if (!response.ok) throw new Error(`서버 오류: ${response.status}`);
-      const data = await response.json();
-      setResult(data);
 
+      const data = await response.json();
+      setResult({
+        answer: data.answer ?? "",
+        sources: Array.isArray(data.sources) ? data.sources : [],
+      });
     } catch (err) {
       if (err.message.includes("Failed to fetch")) {
         setError("FastAPI 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.");
       } else {
-        setError(err.message);
+        setError("분석 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
     } finally {
       setIsLoading(false);
@@ -44,30 +49,54 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-slate-800 mb-2">CareerFit AI</h1>
-        <p className="text-slate-500 text-sm mb-8">취업·공모전 데이터 기반 맞춤형 AI 포트폴리오 코치</p>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80">
+      <main className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
+        <header className="mb-8 text-left">
+          <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
+            RAG 기반 AI 코치
+          </span>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl">
+            CareerFit AI
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">
+            전공·스킬·관심 직무를 입력하면 채용·공모전 데이터를 바탕으로 맞춤 조언을 드립니다.
+          </p>
+        </header>
 
         <InputForm onSubmit={handleAnalyze} isLoading={isLoading} />
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            <p className="font-medium">요청 오류</p>
+            <p className="mt-1">{error}</p>
+          </div>
         )}
 
         {isLoading && (
-          <div className="mt-8 text-center text-slate-500">분석 중입니다...</div>
-        )}
-
-        {result && (
-          <div className="mt-8 space-y-4">
-            <ResultCard answer={result.answer} />
-            {result.sources && result.sources.length > 0 && (
-              <SourceCard sources={result.sources} />
-            )}
+          <div
+            aria-live="polite"
+            aria-busy="true"
+            className="cf-card mt-8 flex items-center justify-center gap-3 p-6"
+          >
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
+            <p className="text-sm text-slate-500">채용 데이터를 검색하고 분석 중입니다...</p>
           </div>
         )}
-      </div>
+
+        {result && !isLoading && (
+          <div className="mt-8 space-y-4" aria-live="polite">
+            <ResultCard
+              answer={result.answer}
+              sources={result.sources}
+            />
+            <SourceCard sources={result.sources} />
+          </div>
+        )}
+      </main>
     </div>
   );
 }
