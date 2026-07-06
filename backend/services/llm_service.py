@@ -90,3 +90,4 @@ def get_llm_response(query: str, context_docs: list) -> dict:
             "answer": f"[오류 발생] {error_msg}. 강사에게 문의하거나 MOCK_MODE=true 로 전환하세요.",
             "sources": []
         }
+        
