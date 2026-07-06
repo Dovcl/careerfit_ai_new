@@ -2,6 +2,7 @@ import pandas as pd
 import sqlite3
 import json
 import os
+from datetime import date
 
 # ─── 1. 파일 경로 설정
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -261,13 +262,19 @@ def convert_to_rag_documents(df: pd.DataFrame) -> list:
         )
 
         # metadata: 검색 결과를 필터링하거나 출처를 표시할 때 사용합니다
+        deadline = str(row.get("deadline", ""))
+        company = str(row.get("company", ""))
         metadata = {
             "id": str(row.get("id", "")),
-            "company": str(row.get("company", "")),
+            "company": company,
             "title": str(row.get("title", "")),
             "job_type": str(row.get("job_type", "")),
-            "deadline": str(row.get("deadline", "")),
-            "source": "jobs.csv"
+            "deadline": deadline,
+            "source": "jobs.csv",
+
+            "deadline_month": deadline[5:7] if len(deadline) >= 7 and deadline[4] == "-" else "",
+            "is_startup": "true" if "스타트업" in company else "false",
+            "first_saved_date": date.today().isoformat()
         }
 
         documents.append({

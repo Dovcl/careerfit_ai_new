@@ -7,10 +7,7 @@
       "title": "데이터 분석가",
       "job_type": "데이터 분석",
       "deadline": "2026-08-31",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "true",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_1"
   },
@@ -22,10 +19,7 @@
       "title": "데이터 엔지니어",
       "job_type": "데이터 엔지니어링",
       "deadline": "2026-09-15",
-      "source": "jobs.csv",
-      "deadline_month": "09",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_2"
   },
@@ -37,10 +31,7 @@
       "title": "머신러닝 엔지니어",
       "job_type": "AI/ML",
       "deadline": "2026-08-20",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_3"
   },
@@ -52,10 +43,7 @@
       "title": "데이터 분석가",
       "job_type": "데이터 분석",
       "deadline": "2026-08-31",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_5"
   },
@@ -67,10 +55,7 @@
       "title": "AI 연구원",
       "job_type": "AI/ML",
       "deadline": "2026-09-01",
-      "source": "jobs.csv",
-      "deadline_month": "09",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_6"
   },
@@ -82,10 +67,7 @@
       "title": "경영전략 컨설턴트",
       "job_type": "경영전략",
       "deadline": "2026-10-15",
-      "source": "jobs.csv",
-      "deadline_month": "10",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_7"
   },
@@ -97,10 +79,7 @@
       "title": "공급망 분석가",
       "job_type": "데이터 분석",
       "deadline": "2026-08-15",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_8"
   },
@@ -112,10 +91,7 @@
       "title": "생물정보학 연구원",
       "job_type": "연구개발",
       "deadline": "2026-08-31",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_10"
   },
@@ -127,10 +103,7 @@
       "title": "프론트엔드 개발자",
       "job_type": "프론트엔드 개발",
       "deadline": "26.09.10",
-      "source": "jobs.csv",
-      "deadline_month": "",
-      "is_startup": "true",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_11"
   },
@@ -142,10 +115,7 @@
       "title": "리스크 분석가",
       "job_type": "금융분석",
       "deadline": "nan",
-      "source": "jobs.csv",
-      "deadline_month": "",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_12"
   },
@@ -157,10 +127,7 @@
       "title": "데이터 사이언티스트",
       "job_type": "데이터 분석",
       "deadline": "2026-10-31",
-      "source": "jobs.csv",
-      "deadline_month": "10",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_13"
   },
@@ -172,10 +139,7 @@
       "title": "게임 데이터 분석가",
       "job_type": "데이터 분석",
       "deadline": "2026-09-30",
-      "source": "jobs.csv",
-      "deadline_month": "09",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_14"
   },
@@ -187,10 +151,7 @@
       "title": "데이터 분석가",
       "job_type": "데이터 분석",
       "deadline": "2026-08-15",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_16"
   },
@@ -202,10 +163,7 @@
       "title": "주니어 데이터 애널리스트",
       "job_type": "데이터 분석",
       "deadline": "2026-08-22",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_17"
   },
@@ -217,10 +175,7 @@
       "title": "BI 데이터 분석가",
       "job_type": "데이터 분석",
       "deadline": "2026-08-30",
-      "source": "jobs.csv",
-      "deadline_month": "08",
-      "is_startup": "false",
-      "first_saved_date": "2026-07-06"
+      "source": "jobs.csv"
     },
     "doc_id": "job_18"
   }
