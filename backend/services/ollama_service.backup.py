@@ -1,3 +1,6 @@
+### 이제는 제거된 파일임. 백업용으로 남김
+
+'''
 import requests
 
 def get_ollama_response(prompt: str, model: str = "llama3.2:3b") -> str:
@@ -35,3 +38,4 @@ def get_ollama_response(prompt: str, model: str = "llama3.2:3b") -> str:
     except requests.exceptions.Timeout:
 
         return "[오류] 응답 시간 초과. 더 작은 모델(tinyllama)을 시도해보세요."
+        '''
