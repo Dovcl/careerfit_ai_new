@@ -1,6 +1,22 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import health, jobs, analyze
+
+DEFAULT_FRONTEND_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+
+def get_frontend_origins() -> list[str]:
+    raw = os.getenv("FRONTEND_ORIGINS", "").strip()
+    if not raw:
+        return DEFAULT_FRONTEND_ORIGINS
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 # react에서 요청을 보내 -> fetch("http://localhost:8080/") = 브라우저 -> http:localhost:8080으로 get 요청
 # 그럼 fastapi에 도착하면 가장먼저 Middleware를 지남. fastapi 내부에서 요청 -> CORSMIDDLEWARE -> 라우터(@app.get) -> 함수실행
@@ -28,16 +44,10 @@ version="0.1.0"
 # 요리 비유: 다른 건물(프론트엔드)에서 오는 배달 요청을 허용하는 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-    ],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?",
-    allow_credentials=True, #쿠키 인증 정보 포함 요청 허용
-    allow_methods=["*"], # GET, POST, PUT, DELETE, OPTIONS 등 모든 메서드 허용
-    allow_headers=["*"], # Content-Type, Authorization 등 모든 헤더 허용
+    allow_origins=get_frontend_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 #라우터 등록

@@ -3,8 +3,7 @@ import { Sparkles, Briefcase, BookOpen, ChevronRight } from "lucide-react";
 import InputForm from "./components/InputForm";
 import ResultCard from "./components/ResultCard";
 import SourceCard from "./components/SourceCard";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+import { apiUrl } from "./config/api";
 
 async function parseSseStream(response, onEvent) {
   const reader = response.body.getReader();
@@ -53,7 +52,7 @@ function App() {
     setLastQuery(formData);
 
     try {
-      const response = await fetch(`${API_BASE}/analyze/stream`, {
+      const response = await fetch(apiUrl("/analyze/stream"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

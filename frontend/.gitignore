@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# 환경변수 (API Key 보호)
+.env
+.env.*
+!.env.example
+!.env.production.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // 브라우저 → Vite(같은 Origin) → FastAPI. CORS preflight 회피
+      // 선택: VITE_API_BASE_URL 대신 /api 프록시를 쓰는 로컬 개발용 (기본은 직접 :8080 호출)
       '/api': {
         target: 'http://127.0.0.1:8080',
         changeOrigin: true,
