@@ -1,6 +1,8 @@
+import { Sparkles, FileText } from "lucide-react";
+
 function SkillTags({ skills }) {
   if (!skills) {
-    return <span className="text-xs text-slate-400">스킬 정보 없음</span>;
+    return <span className="text-xs text-muted-foreground">스킬 정보 없음</span>;
   }
 
   const tags = skills
@@ -9,7 +11,7 @@ function SkillTags({ skills }) {
     .filter(Boolean);
 
   if (tags.length === 0) {
-    return <span className="text-xs text-slate-400">스킬 정보 없음</span>;
+    return <span className="text-xs text-muted-foreground">스킬 정보 없음</span>;
   }
 
   return (
@@ -17,7 +19,7 @@ function SkillTags({ skills }) {
       {tags.map((skill) => (
         <span
           key={skill}
-          className="rounded-md bg-white px-2 py-0.5 font-mono text-xs text-slate-600 ring-1 ring-slate-200"
+          className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-mono"
         >
           {skill}
         </span>
@@ -31,62 +33,63 @@ function distanceToMatchScore(distance) {
   return Math.min(100, Math.max(0, Math.round((1 / (1 + distance)) * 100)));
 }
 
-function matchBadge(score) {
-  if (score == null) return { label: "—", className: "bg-slate-100 text-slate-500 ring-slate-200" };
-  if (score >= 58) return { label: "높음", className: "bg-emerald-50 text-emerald-700 ring-emerald-100" };
-  if (score >= 52) return { label: "보통", className: "bg-blue-50 text-blue-700 ring-blue-100" };
-  return { label: "참고", className: "bg-slate-100 text-slate-600 ring-slate-200" };
+function MatchBadge({ score }) {
+  if (score == null) return null;
+
+  const color =
+    score >= 90 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+    score >= 80 ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
+    "bg-amber-50 text-amber-700 border-amber-200";
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono font-medium border ${color}`}>
+      <Sparkles className="w-3 h-3" />
+      {score}% 매칭
+    </span>
+  );
 }
 
 function SourceItemCard({ source, rank }) {
   const score = distanceToMatchScore(source.distance);
-  const badge = matchBadge(score);
   const initial = (source.company || "?").charAt(0).toUpperCase();
+  const logoColors = ["#4338ca", "#6366f1", "#0f766e", "#b45309", "#1d4ed8"];
+  const logoColor = logoColors[(rank - 1) % logoColors.length];
 
   return (
-    <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-            {rank}
-          </span>
-          <span className="text-xs font-medium text-slate-500">검색 순위 {rank}</span>
-        </div>
-        {score != null && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-700">유사도 {score}%</span>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${badge.className}`}>
-              {badge.label}
-            </span>
+    <article className="group bg-card border border-border rounded-xl p-5 hover:border-accent/40 hover:shadow-lg hover:shadow-indigo-100/60 transition-all duration-200">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 font-mono text-white"
+            style={{ backgroundColor: logoColor }}
+          >
+            {initial}
           </div>
-        )}
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">{source.company || "회사명 없음"}</p>
+            <h3 className="text-sm font-semibold text-foreground leading-tight mt-0.5 group-hover:text-accent transition-colors">
+              {source.title || "직무명 없음"}
+            </h3>
+          </div>
+        </div>
+        <MatchBadge score={score} />
       </div>
 
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-700 ring-1 ring-blue-100">
-            {initial}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-800">{source.company || "회사명 없음"}</p>
-            <p className="mt-0.5 text-sm text-slate-600">{source.title || "직무명 없음"}</p>
-            {source.job_type && (
-              <span className="mt-2 inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
-                {source.job_type}
-              </span>
-            )}
-          </div>
-        </div>
+      {source.job_type && (
+        <span className="inline-block mb-3 px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
+          {source.job_type}
+        </span>
+      )}
 
-        <div className="mt-4 rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">필수 스킬</p>
-          <SkillTags skills={source.required_skills} />
-        </div>
+      <div className="rounded-lg bg-muted/60 p-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">필수 스킬</p>
+        <SkillTags skills={source.required_skills} />
+      </div>
 
+      <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">검색 순위 #{rank}</span>
         {typeof source.distance === "number" && (
-          <p className="mt-3 text-[11px] text-slate-400">
-            벡터 거리: {source.distance} (낮을수록 질문과 유사)
-          </p>
+          <span className="text-xs font-mono text-muted-foreground">거리 {source.distance.toFixed(3)}</span>
         )}
       </div>
     </article>
@@ -102,42 +105,27 @@ function SourceCard({ sources }) {
 
   if (sortedSources.length === 0) {
     return (
-      <section className="cf-card border-dashed p-6 text-center">
-        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </span>
-        <h2 className="mt-3 text-sm font-semibold text-slate-700">참고한 공고 출처</h2>
-        <p className="mt-1 text-sm text-slate-500">검색된 공고 데이터가 없습니다.</p>
+      <section className="bg-card border border-dashed border-border rounded-xl p-6 text-center">
+        <div className="mx-auto w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
+          <FileText className="w-5 h-5" />
+        </div>
+        <h2 className="mt-3 text-sm font-semibold text-foreground">기업 공고</h2>
+        <p className="mt-1 text-sm text-muted-foreground">검색된 기업 공고가 없습니다.</p>
       </section>
     );
   }
 
   return (
-    <section className="cf-card overflow-hidden">
-      <div className="border-b border-slate-100 bg-slate-50/80 px-6 py-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-200/80 text-slate-600">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </span>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-800">참고한 공고 출처</h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                ChromaDB RAG 검색 결과 · 총 {sortedSources.length}건
-              </p>
-            </div>
-          </div>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
-            RAG Sources
-          </span>
-        </div>
+    <section>
+      <div className="flex items-center gap-2 mb-5">
+        <FileText className="w-4 h-4 text-accent" />
+        <h2 className="text-sm font-semibold text-foreground">기업 공고</h2>
+        <span className="ml-1 px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-mono">
+          {sortedSources.length}
+        </span>
       </div>
 
-      <div className="space-y-4 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedSources.map((source, index) => (
           <SourceItemCard
             key={source.doc_id || `${source.company}-${source.title}-${index}`}

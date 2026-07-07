@@ -1,11 +1,10 @@
-// frontend/src/App.jsx
 import { useState } from "react";
+import { Sparkles, Briefcase, BookOpen, ChevronRight } from "lucide-react";
 import InputForm from "./components/InputForm";
 import ResultCard from "./components/ResultCard";
 import SourceCard from "./components/SourceCard";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
-// ⚠️ API Key는 절대 여기에 넣지 않습니다
 
 async function parseSseStream(response, onEvent) {
   const reader = response.body.getReader();
@@ -42,6 +41,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
+  const [lastQuery, setLastQuery] = useState(null);
 
   async function handleAnalyze(formData) {
     if (isLoading) return;
@@ -50,6 +50,7 @@ function App() {
     setIsStreaming(true);
     setError(null);
     setResult({ answer: "", sources: [] });
+    setLastQuery(formData);
 
     try {
       const response = await fetch(`${API_BASE}/analyze/stream`, {
@@ -100,54 +101,112 @@ function App() {
   const showLoadingBanner = isLoading && !result?.answer;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100/80">
-      <main className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <header className="mb-8 text-left">
-          <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-100">
-            RAG 기반 AI 코치
-          </span>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl">
-            CareerFit AI
+    <div className="min-h-screen bg-background">
+      <nav className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-bold text-foreground tracking-tight">CareerFit</span>
+          </div>
+        </div>
+      </nav>
+
+      <section className="max-w-6xl mx-auto px-6 pt-16 pb-10">
+        <div className="max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-semibold mb-5">
+            <Sparkles className="w-3 h-3" />
+            AI 기반 맞춤 추천
+          </div>
+          <h1 className="text-4xl font-extrabold text-foreground leading-tight tracking-tight mb-3">
+            어디에 지원할지<br />
+            아직 막막하다면<br />
+            <span className="text-accent">CareerFit</span>이 먼저 정리해 드릴게요
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            전공·스킬·관심 직무를 입력하면 채용·공모전 데이터를 바탕으로 맞춤 조언을 드립니다.
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            맞춤 조언과 함께, 참고할 수 있는 기업 공고를 함께 확인하세요.
           </p>
-        </header>
+        </div>
+      </section>
 
+      <section className="max-w-6xl mx-auto px-6 mb-12">
         <InputForm onSubmit={handleAnalyze} isLoading={isLoading} />
+      </section>
 
-        {error && (
+      {error && (
+        <section className="max-w-6xl mx-auto px-6 mb-8">
           <div
             role="alert"
             aria-live="assertive"
-            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
           >
             <p className="font-medium">요청 오류</p>
             <p className="mt-1">{error}</p>
           </div>
-        )}
+        </section>
+      )}
 
-        {showLoadingBanner && (
+      {showLoadingBanner && (
+        <section className="max-w-6xl mx-auto px-6 mb-12">
           <div
             aria-live="polite"
             aria-busy="true"
-            className="cf-card mt-8 flex items-center justify-center gap-3 p-6"
+            className="flex items-center justify-center gap-3 p-6 bg-card border border-border rounded-xl"
           >
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
-            <p className="text-sm text-slate-500">채용 데이터를 검색하고 분석 중입니다...</p>
+            <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-accent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">채용 데이터를 검색하고 분석 중입니다...</p>
           </div>
-        )}
+        </section>
+      )}
 
-        {showResults && (
-          <div className="mt-8 space-y-4" aria-live="polite">
-            {isStreaming && result.answer && (
-              <p className="text-xs font-medium text-blue-600">AI가 답변을 작성 중입니다...</p>
-            )}
-            <ResultCard answer={result.answer} sources={result.sources} />
-            <SourceCard sources={result.sources} />
+      {showResults && (
+        <section className="max-w-6xl mx-auto px-6 pb-20 space-y-6">
+          {lastQuery && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/60 border border-secondary">
+              <Sparkles className="w-4 h-4 text-accent flex-shrink-0" />
+              <p className="text-xs text-secondary-foreground">
+                <span className="font-semibold text-foreground">{lastQuery.major}</span>
+                {" · "}
+                <span className="font-semibold text-foreground">{lastQuery.skills.join(", ")}</span>
+                {" · "}
+                <span className="font-semibold text-foreground">{lastQuery.jobType}</span>
+                &nbsp;기준으로 AI 맞춤 분석 결과입니다.
+              </p>
+              <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto flex-shrink-0" />
+            </div>
+          )}
+
+          {isStreaming && result.answer && (
+            <p className="text-xs font-medium text-accent">AI가 답변을 작성 중입니다...</p>
+          )}
+
+          <ResultCard answer={result.answer} sources={result.sources} />
+          <SourceCard sources={result.sources} />
+        </section>
+      )}
+
+      {!showResults && !isLoading && (
+        <section className="max-w-6xl mx-auto px-6 pb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { icon: Briefcase, title: "RAG 검색", desc: "채용·공모전 데이터 검색", color: "text-indigo-500" },
+              { icon: Sparkles, title: "AI 분석", desc: "맞춤형 역량 코칭", color: "text-emerald-500" },
+              { icon: BookOpen, title: "출처 제공", desc: "근거 공고 투명 공개", color: "text-amber-500" },
+            ].map((stat) => (
+              <div key={stat.title} className="flex items-center gap-4 p-5 bg-card border border-border rounded-xl">
+                <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center ${stat.color}`}>
+                  <stat.icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xl font-extrabold text-foreground">{stat.title}</p>
+                  <p className="text-xs text-muted-foreground">{stat.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </main>
+        </section>
+      )}
     </div>
   );
 }

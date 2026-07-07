@@ -1,75 +1,68 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { Search, Briefcase, BookOpen, Plus, X } from "lucide-react";
 
-const DEMO_PROFILE = {
-  major: "통계학과",
-  skillsInput: "Python, SQL, 데이터 분석",
-  jobType: "데이터 분석",
-};
-
-const FIELDS = [
-  {
-    id: "major",
-    step: 1,
-    label: "전공",
-    hint: "학과·전공 분야를 입력해 주세요.",
-    placeholder: "예: 통계학과, 경영학과",
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.8}
-        d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6-3l6 3 6-3"
-      />
-    ),
-  },
-  {
-    id: "skills",
-    step: 2,
-    label: "보유 스킬",
-    hint: "쉼표(,)로 구분해 입력하면 태그로 미리보기됩니다.",
-    placeholder: "예: Python, SQL, R",
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.8}
-        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-      />
-    ),
-  },
-  {
-    id: "jobType",
-    step: 3,
-    label: "관심 직무",
-    hint: "지원하고 싶은 직무 유형을 적어 주세요.",
-    placeholder: "예: 데이터 분석, AI/ML",
-    icon: (
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.8}
-        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0v6a2 2 0 01-2 2H10a2 2 0 01-2-2V6"
-      />
-    ),
-  },
+const SKILL_SUGGESTIONS = [
+  "Python", "SQL", "Java", "JavaScript", "TypeScript", "React", "Node.js",
+  "R", "TensorFlow", "AWS", "Docker", "Excel", "PowerBI", "Tableau",
 ];
+
+const MAJOR_SUGGESTIONS = [
+  "통계학과", "컴퓨터공학", "소프트웨어공학", "데이터사이언스", "경영학",
+  "산업공학", "AI·인공지능",
+];
+
+const JOB_SUGGESTIONS = [
+  "데이터 분석", "백엔드 개발자", "프론트엔드 개발자", "ML엔지니어",
+  "풀스택 개발자", "DevOps 엔지니어", "UX 디자이너",
+];
+
+function TagPill({ label, onRemove }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm font-medium">
+      {label}
+      {onRemove && (
+        <button type="button" onClick={onRemove} className="hover:opacity-60 transition-opacity" aria-label={`${label} 제거`}>
+          <X className="w-3 h-3" />
+        </button>
+      )}
+    </span>
+  );
+}
+
+function SuggestionChip({ label, onClick, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border text-sm text-muted-foreground hover:border-accent hover:text-accent hover:bg-secondary transition-all duration-150 disabled:opacity-50"
+    >
+      <Plus className="w-3 h-3" />
+      {label}
+    </button>
+  );
+}
 
 function InputForm({ onSubmit, isLoading }) {
   const [major, setMajor] = useState("");
-  const [skillsInput, setSkillsInput] = useState("");
+  const [skills, setSkills] = useState([]);
+  const [skillInput, setSkillInput] = useState("");
   const [jobType, setJobType] = useState("");
 
-  const skillPreview = useMemo(
-    () =>
-      skillsInput
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    [skillsInput]
-  );
+  const addSkill = (skill) => {
+    const trimmed = skill.trim();
+    if (trimmed && !skills.includes(trimmed)) {
+      setSkills([...skills, trimmed]);
+    }
+    setSkillInput("");
+  };
 
-  const filledCount = [major, skillsInput, jobType].filter((v) => v.trim()).length;
-  const isValid = filledCount === 3;
+  const removeSkill = (skill) => {
+    setSkills(skills.filter((s) => s !== skill));
+  };
+
+  const isValid = major.trim() && skills.length > 0 && jobType.trim();
+  const unusedSkills = SKILL_SUGGESTIONS.filter((s) => !skills.includes(s)).slice(0, 6);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -77,167 +70,143 @@ function InputForm({ onSubmit, isLoading }) {
 
     onSubmit({
       major: major.trim(),
-      skills: skillPreview,
+      skills,
       jobType: jobType.trim(),
     });
   }
 
-  function fillDemo() {
-    if (isLoading) return;
-    setMajor(DEMO_PROFILE.major);
-    setSkillsInput(DEMO_PROFILE.skillsInput);
-    setJobType(DEMO_PROFILE.jobType);
-  }
-
-  function clearForm() {
-    if (isLoading) return;
-    setMajor("");
-    setSkillsInput("");
-    setJobType("");
-  }
-
-  const values = { major, skills: skillsInput, jobType };
-  const setters = {
-    major: setMajor,
-    skills: setSkillsInput,
-    jobType: setJobType,
-  };
-
   return (
-    <section className="cf-card overflow-hidden">
-      <div className="border-b border-slate-100 bg-slate-50/80 px-6 py-5 sm:px-7">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.8}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-            </span>
-            <div className="text-left">
-              <h2 className="text-lg font-semibold text-slate-800">내 정보 입력</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                3가지 항목을 입력하면 AI가 맞춤 분석을 시작합니다.
-              </p>
+    <section className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+          <div>
+            <label htmlFor="major" className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
+              <BookOpen className="w-3 h-3 inline mr-1.5" />
+              전공
+            </label>
+            <input
+              id="major"
+              type="text"
+              placeholder="예: 통계학과"
+              value={major}
+              onChange={(e) => setMajor(e.target.value)}
+              disabled={isLoading}
+              className="cf-input"
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {MAJOR_SUGGESTIONS.slice(0, 4).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMajor(m)}
+                  disabled={isLoading}
+                  className={`px-2.5 py-1 rounded-full text-xs border transition-all disabled:opacity-50 ${
+                    major === m
+                      ? "bg-secondary border-accent/50 text-secondary-foreground"
+                      : "border-border text-muted-foreground hover:border-accent/40 hover:text-foreground"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
             </div>
           </div>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
-            {filledCount}/3 작성 완료
-          </span>
-        </div>
 
-        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-blue-600 transition-all duration-300"
-            style={{ width: `${(filledCount / 3) * 100}%` }}
-            role="progressbar"
-            aria-valuenow={filledCount}
-            aria-valuemin={0}
-            aria-valuemax={3}
-            aria-label="입력 진행률"
-          />
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6 sm:px-7">
-        {FIELDS.map((field) => (
-          <div
-            key={field.id}
-            className="rounded-xl border border-slate-100 bg-white p-4 transition-colors focus-within:border-blue-200 focus-within:ring-2 focus-within:ring-blue-500/10"
-          >
-            <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">
-                {field.step}
-              </span>
-              <label htmlFor={field.id} className="text-sm font-semibold text-slate-700">
-                {field.label}
-              </label>
-              {values[field.id].trim() && (
-                <span className="ml-auto text-xs font-medium text-emerald-600">입력됨</span>
-              )}
-            </div>
-
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  {field.icon}
-                </svg>
-              </span>
+          <div>
+            <label htmlFor="skill-input" className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
+              보유 스킬
+            </label>
+            <div className="flex gap-2">
               <input
-                id={field.id}
+                id="skill-input"
                 type="text"
-                value={values[field.id]}
-                onChange={(e) => setters[field.id](e.target.value)}
-                placeholder={field.placeholder}
-                className="cf-input pl-10"
+                placeholder="스킬 추가"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSkill(skillInput);
+                  }
+                }}
                 disabled={isLoading}
-                autoComplete="off"
+                className="cf-input flex-1"
               />
+              <button
+                type="button"
+                onClick={() => addSkill(skillInput)}
+                disabled={isLoading}
+                className="px-3 py-2.5 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+                aria-label="스킬 추가"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
-
-            <p className="mt-2 text-xs text-slate-500">{field.hint}</p>
-
-            {field.id === "skills" && skillPreview.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5" aria-label="스킬 미리보기">
-                {skillPreview.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-xs text-blue-800 ring-1 ring-blue-100"
-                  >
-                    {skill}
-                  </span>
+            {skills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {skills.map((s) => (
+                  <TagPill key={s} label={s} onRemove={() => removeSkill(s)} />
                 ))}
               </div>
             )}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {unusedSkills.map((s) => (
+                <SuggestionChip key={s} label={s} onClick={() => addSkill(s)} disabled={isLoading} />
+              ))}
+            </div>
           </div>
-        ))}
 
-        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-2">
-          <button
-            type="button"
-            onClick={fillDemo}
-            disabled={isLoading}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-          >
-            발표용 예시 채우기
-          </button>
-          <button
-            type="button"
-            onClick={clearForm}
-            disabled={isLoading || filledCount === 0}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-          >
-            초기화
-          </button>
+          <div>
+            <label htmlFor="jobType" className="block text-xs font-semibold text-foreground mb-2 uppercase tracking-wide">
+              <Briefcase className="w-3 h-3 inline mr-1.5" />
+              관심 직무
+            </label>
+            <input
+              id="jobType"
+              type="text"
+              placeholder="예: 데이터 분석"
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+              disabled={isLoading}
+              className="cf-input"
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {JOB_SUGGESTIONS.slice(0, 4).map((j) => (
+                <button
+                  key={j}
+                  type="button"
+                  onClick={() => setJobType(j)}
+                  disabled={isLoading}
+                  className={`px-2.5 py-1 rounded-full text-xs border transition-all disabled:opacity-50 ${
+                    jobType === j
+                      ? "bg-secondary border-accent/50 text-secondary-foreground"
+                      : "border-border text-muted-foreground hover:border-accent/40 hover:text-foreground"
+                  }`}
+                >
+                  {j}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading || !isValid}
-          className="cf-btn-primary flex items-center justify-center gap-2"
-        >
+        <button type="submit" disabled={isLoading || !isValid} className="cf-btn-primary flex items-center justify-center gap-2">
           {isLoading ? (
             <>
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              분석 중...
+              <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+              AI가 분석 중...
             </>
           ) : (
             <>
-              역량 분석 요청
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
+              <Search className="w-4 h-4" />
+              맞춤 분석 시작
             </>
           )}
         </button>
 
         {!isValid && !isLoading && (
-          <p className="text-center text-xs text-slate-400">
-            모든 항목을 입력하면 분석을 요청할 수 있습니다.
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            전공, 스킬, 관심 직무를 모두 입력하면 분석을 시작할 수 있습니다.
           </p>
         )}
       </form>
