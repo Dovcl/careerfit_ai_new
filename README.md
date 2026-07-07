@@ -212,7 +212,17 @@ careerfit_ai_new/
 
 ## 📝 개발 과정
 
-Docker 기반 Render 배포와 프론트엔드 CORS 연동이 가장 어려웠다. 백엔드 `FRONTEND_ORIGINS`와 프론트 `VITE_API_BASE_URL`을 분리 설정하고, Render 콜드 스타트 시 `/health`로 서버를 먼저 깨운 뒤 분석 요청을 보내는 방식으로 해결했다.
+5일차 Render 배포에서 가장 어려웠던 점은 **프론트·백엔드를 서로 다른 URL로 올린 뒤 연결을 맞추는 것**이었다. 로컬에서는 동작하던 흐름이 클라우드에서 CORS·환경변수·콜드 스타트 이슈로 끊겼고, 아래 순서로 해결했다.
+
+| 문제 | 극복 |
+| --- | --- |
+| CORS 차단 (`blocked by CORS policy`) | 백엔드 `FRONTEND_ORIGINS`에 프론트 URL 등록 후 재배포 |
+| 프론트·백엔드 URL 불일치 | 프론트 `VITE_API_BASE_URL` ↔ 백엔드 `FRONTEND_ORIGINS` 양방향 설정 |
+| 클라우드에서 `localhost:8080` 호출 | Vite는 빌드 시점에 API 주소가 고정됨 → Render Environment에 배포 전 설정 |
+| Render 무료 플랜 콜드 스타트 | 분석 전 `/health`로 서버를 먼저 깨운 뒤 요청 |
+| Docker `.env` / 포트 오류 | `KEY=value` 형식 통일, Dockerfile 포트 `8080` 일치, HEALTHCHECK 추가 |
+
+> **한 줄 회고:** 클라우드 배포는 코드 업로드만으로 끝나지 않고, **프론트·백엔드 URL을 양방향으로 맞추고 Vite 빌드 환경변수와 Render 콜드 스타트까지 고려해야** 완성된다.
 
 ---
 
