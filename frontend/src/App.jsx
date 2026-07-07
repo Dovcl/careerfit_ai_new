@@ -58,9 +58,20 @@ function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [lastQuery, setLastQuery] = useState(null);
+  const [isColdStartSlow, setIsColdStartSlow] = useState(false);
 
   useEffect(() => {
-    wakeBackend();
+    let mounted = true;
+    (async () => {
+      const { ok, elapsedMs } = await wakeBackend();
+      if (!mounted) return;
+      // 첫 페이지 로드에서 백엔드를 깨우는 시간이 길면(슬립 상태 가능성) 안내 문구를 표시
+      if (ok && elapsedMs > 2000) setIsColdStartSlow(true);
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   async function handleAnalyze(formData) {
@@ -110,6 +121,8 @@ function App() {
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
+      // 첫 로딩 배너 안내는 1회만 유지
+      setIsColdStartSlow(false);
     }
   }
 
@@ -171,7 +184,15 @@ function App() {
             className="flex items-center justify-center gap-3 p-6 bg-card border border-border rounded-xl"
           >
             <div className="w-5 h-5 border-2 border-muted-foreground/30 border-t-accent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground">채용 데이터를 검색하고 분석 중입니다...</p>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm text-muted-foreground">채용 데이터를 검색하고 분석 중입니다...</p>
+              {isColdStartSlow && (
+                <p className="text-xs text-muted-foreground">
+                  Render 무료 플랜 슬립으로 인해 첫 요청은 조금 느릴 수 있어요.
+                  잠시만 기다려 주세요.
+                </p>
+              )}
+            </div>
           </div>
         </section>
       )}
