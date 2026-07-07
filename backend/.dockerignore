@@ -32,3 +32,43 @@
 **/values.dev.yaml
 LICENSE
 README.md
+
+# .dockerignore
+
+
+
+# 가상환경 (컨테이너 안에서 재설치하므로 불필요)
+
+venv/
+
+.venv/
+
+
+
+# 환경변수 파일 (docker run 시 환경변수로 주입)
+
+.env
+
+
+
+# ChromaDB (컨테이너 실행 시 재생성 가능)
+
+chroma_db/
+
+
+
+# Python 캐시
+
+pycache/
+
+*.pyc
+
+*.pyo
+
+
+
+# 운영체제 파일
+
+.DS_Store
+
+Thumbs.db

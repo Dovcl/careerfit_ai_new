@@ -13,17 +13,27 @@ WORKDIR /app
 # requirements.txt 가 변경되지 않으면 pip install 단계를 다시 실행하지 않음
 COPY requirements.txt .
 # 4. 패키지 설치
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir --retries 5 --timeout 60 -r requirements.txt
 
 # 5. 나머지 코드 복사
 # .env 파일은 복사하지 않습니다 — docker run 시 환경변수로 주입
 COPY . .
 
-# 6. 포트 선언
+# 6. 사용자 추가
+RUN useradd --create-home --shell /bin/bash appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
+# 7. 포트 선언
 # 컨테이너 내부에서 8000번 포트를 사용한다고 선언
 EXPOSE 8080
 
-# 7. 실행 명령
+# 8. 헬스 체크
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)" || exit 1
+
+# 9. 실행 명령
 # docker run 시 자동으로 실행되는 명령어
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 #CMD uvicorn 'venv.lib.python3.11.site-packages.httpx._transports.asgi:application' --host=0.0.0.0 --port=8080
