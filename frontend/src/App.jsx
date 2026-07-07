@@ -35,6 +35,23 @@ async function parseSseStream(response, onEvent) {
   }
 }
 
+const QUOTA_EXCEEDED_MESSAGE = "토큰 사용량 초과, 개발자에게 모델변경을 요청하세요";
+
+function getDisplayError(message) {
+  if (!message) return "분석 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+  if (message.includes("Failed to fetch")) {
+    return "FastAPI 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.";
+  }
+  if (
+    message.includes("429") ||
+    /quota|RESOURCE_EXHAUSTED/i.test(message) ||
+    message === QUOTA_EXCEEDED_MESSAGE
+  ) {
+    return QUOTA_EXCEEDED_MESSAGE;
+  }
+  return message;
+}
+
 function App() {
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,11 +105,7 @@ function App() {
         }
       });
     } catch (err) {
-      if (err.message.includes("Failed to fetch")) {
-        setError("FastAPI 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.");
-      } else {
-        setError(err.message || "분석 요청에 실패했습니다. 잠시 후 다시 시도해 주세요.");
-      }
+      setError(getDisplayError(err.message));
       setResult(null);
     } finally {
       setIsLoading(false);

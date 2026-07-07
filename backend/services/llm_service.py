@@ -39,10 +39,18 @@ HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
 # 기본 주소는 http://localhost:11434 입니다.
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+QUOTA_EXCEEDED_MESSAGE = "토큰 사용량 초과, 개발자에게 모델변경을 요청하세요"
 
-# =========================
-# 2. LLM_MODEL → provider/model 분리
-# =========================
+
+def get_user_facing_error(error: Exception) -> str:
+    error_msg = str(error)
+    if (
+        "429" in error_msg
+        or "RESOURCE_EXHAUSTED" in error_msg
+        or "quota" in error_msg.lower()
+    ):
+        return QUOTA_EXCEEDED_MESSAGE
+    return error_msg
 
 def get_provider_and_model(model_name: str) -> tuple[str, str]:
     """
@@ -488,13 +496,9 @@ def get_llm_response(query: str, context_docs: list) -> dict:
         error_msg = str(e)
 
         # API 한도 초과 계열 오류 처리
-        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
             return {
-                "answer": (
-                    "[API 한도 초과] 현재 선택된 LLM API 한도에 도달했습니다. "
-                    ".env에서 MOCK_MODE=true로 전환하거나 "
-                    "LLM_MODEL을 다른 모델로 바꿔보세요."
-                ),
+                "answer": QUOTA_EXCEEDED_MESSAGE,
                 "sources": sources,
             }
 

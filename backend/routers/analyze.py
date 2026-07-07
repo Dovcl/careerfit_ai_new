@@ -12,6 +12,7 @@ from services.llm_service import (
     build_rag_prompt,
     build_sources,
     get_llm_response,
+    get_user_facing_error,
     stream_llm,
 )
 
@@ -67,7 +68,7 @@ def analyze_career_stream(request: AnalyzeRequest):
 
             yield _sse_event("done", {})
         except Exception as e:
-            yield _sse_event("error", {"message": str(e)})
+            yield _sse_event("error", {"message": get_user_facing_error(e)})
 
     return StreamingResponse(
         event_generator(),
