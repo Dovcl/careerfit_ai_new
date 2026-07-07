@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Briefcase, BookOpen, ChevronRight } from "lucide-react";
 import InputForm from "./components/InputForm";
 import ResultCard from "./components/ResultCard";
 import SourceCard from "./components/SourceCard";
-import { apiUrl } from "./config/api";
+import { apiUrl, wakeBackend } from "./config/api";
 
 async function parseSseStream(response, onEvent) {
   const reader = response.body.getReader();
@@ -41,6 +41,10 @@ function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const [lastQuery, setLastQuery] = useState(null);
+
+  useEffect(() => {
+    wakeBackend();
+  }, []);
 
   async function handleAnalyze(formData) {
     if (isLoading) return;

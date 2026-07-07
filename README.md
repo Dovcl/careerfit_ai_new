@@ -176,10 +176,25 @@ cd backend && python data/preprocess.py
 - **출처 표시** — 분석에 참고한 공고를 `sources`로 함께 반환하고 UI에 카드로 표시
 - **SSE 스트리밍** — `/analyze/stream`으로 AI 답변을 실시간 출력
 - **Mock Mode** — API 키 없이도 `MOCK_MODE=true`로 전체 흐름 테스트 가능
+- **Health Check** — Render 콜드 스타트 대응 및 서버 상태 확인 (`GET /health`)
 
 ---
 
-## 📁 프로젝트 구조
+## 💪  Health Check
+
+Render 무료 플랜은 일정 시간 미사용 시 백엔드가 슬립한다. 이를 대비해 `/health`로 서버 상태를 확인하고, 프론트는 페이지 로드 시 백엔드를 미리 깨운다.
+
+
+| 구분     | 내용                                                     |
+| ------ | ------------------------------------------------------ |
+| API    | `GET /health` → `{"status": "ok", ...}`                |
+| 프론트    | `App.jsx` `useEffect` → `wakeBackend()` → `/health` 호출 |
+| Docker | `HEALTHCHECK`로 컨테이너 상태 주기 점검                           |
+
+
+```
+페이지 접속 → /health (서버 깨우기) → 사용자 입력 → /analyze/stream
+```
 
 ```
 careerfit_ai_new/
@@ -211,18 +226,16 @@ careerfit_ai_new/
 5일차 Render 배포에서 가장 어려웠던 점은 **프론트·백엔드를 서로 다른 URL로 올린 뒤 연결을 맞추는 것**이었다. 로컬에서는 동작하던 흐름이 클라우드에서 CORS·환경변수·콜드 스타트 이슈로 끊겼고, 아래 순서로 해결했다.
 
 
-| 문제                                 | 극복                                                         |
-| ---------------------------------- | ---------------------------------------------------------- |
-| CORS 차단 (`blocked by CORS policy`) | 백엔드 `FRONTEND_ORIGINS`에 프론트 URL 등록 후 재배포                   |
-| 프론트·백엔드 URL 불일치                    | 프론트 `VITE_API_BASE_URL` ↔ 백엔드 `FRONTEND_ORIGINS` 양방향 설정    |
-| 클라우드에서 `localhost:8080` 호출         | Vite는 빌드 시점에 API 주소가 고정됨 → Render Environment에 배포 전 설정     |
-| Render 무료 플랜 콜드 스타트                | 분석 전 프론트에서 `/health` 호출로 서버 깨운 뒤 분석 API 요청                 |
-| Docker `.env` / 포트 오류              | `KEY=value` 형식 통일, Dockerfile 포트 `8080` 일치, HEALTHCHECK 추가 |
+| 문제                                 | 극복                                                                   |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| CORS 차단 (`blocked by CORS policy`) | 백엔드 `FRONTEND_ORIGINS`에 프론트 URL 등록 후 재배포                             |
+| 프론트·백엔드 URL 불일치                    | 프론트 `VITE_API_BASE_URL` ↔ 백엔드 `FRONTEND_ORIGINS` 양방향 설정              |
+| 클라우드에서 `localhost:8080` 호출         | Vite는 빌드 시점에 API 주소가 고정됨 → Render Environment에 배포 전 설정               |
+| Render 무료 플랜 콜드 스타트                | 페이지 로드 시 `/health` 호출로 백엔드 미리 깨움 → [Health Check](#-health-check) 참고 |
+| Docker `.env` / 포트 오류              | `KEY=value` 형식 통일, Dockerfile 포트 `8080` 일치, HEALTHCHECK 추가           |
 
 
 > **한 줄 회고:** 클라우드 배포는 코드 업로드만으로 끝나지 않고, **프론트·백엔드 URL을 양방향으로 맞추고 Vite 빌드 환경변수와 Render 콜드 스타트까지 고려해야** 완성된다.
-
-Render 무료 플랜 콜드 스타트 대응으로, `frontend/src/config/api.js`의 `wakeBackend()`가 분석 요청 전에 `/health`를 먼저 호출한다.
 
 ---
 
